@@ -9,3 +9,4 @@ Route::get('/', function () {
 Route::get('/team', function () {
     return view('team');
 });
+
