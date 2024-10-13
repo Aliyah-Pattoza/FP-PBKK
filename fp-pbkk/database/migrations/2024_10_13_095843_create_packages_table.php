@@ -11,15 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('transactions', function (Blueprint $table) {
-            $table->id();
-            $table->date('transaction_date');
+        Schema::create('packages', function (Blueprint $table) {
+            $table->string('id')->primary(); // Custom ID for packages
+            $table->string('name_package');
+            $table->string('destination');
+            $table->date('travel_date');
+            $table->decimal('price', 10, 2); // Price field
             $table->string('status');
-            $table->decimal('total_price', 10, 2);
-            $table->string('person_number');
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
-        });
+        });        
     }
 
     /**
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('transactions');
+        Schema::dropIfExists('packages');
     }
 };

@@ -12,11 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('refunds', function (Blueprint $table) {
-            $table->id();
-            $table->decimal('refund_amount', 10, 2);
-            $table->string('reason');
-            $table->foreignId('transaction_id')->constrained('transactions')->onDelete('cascade');
+            $table->string('id_refund')->primary(); // Custom refund ID
+            $table->decimal('refund_amount', 10, 2); // Refund amount
+            $table->string('reason'); // Reason for refund
+            $table->string('transaction_id'); // Foreign key to transactions table
+
             $table->timestamps();
+
+            // Foreign key constraint on transaction_id, referencing id in transactions table
+            $table->foreign('transaction_id')->references('id')->on('transactions')->onDelete('cascade');
         });
     }
 

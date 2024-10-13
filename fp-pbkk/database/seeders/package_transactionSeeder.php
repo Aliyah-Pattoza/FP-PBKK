@@ -9,6 +9,6 @@ class package_transactionSeeder extends Seeder
 {
     public function run(): void
     {
-        package_transaction::factory(100)->create();
+        package_transaction::factory(10)->create();
     }
 }

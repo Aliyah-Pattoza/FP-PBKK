@@ -2,11 +2,12 @@
 
 namespace Database\Factories;
 
+use App\Models\PackageTransaction;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class PackageTransactionFactory extends Factory
 {
-    protected $model = \App\Models\PackageTransaction::class;
+    protected $model = PackageTransaction::class;
 
     public function definition()
     {
@@ -16,3 +17,4 @@ class PackageTransactionFactory extends Factory
         ];
     }
 }
+

@@ -12,16 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('vehicles', function (Blueprint $table) {
-            $table->id();
+            $table->string('id')->primary(); // Ensure this is primary or unique
             $table->string('tipe_kendaraan');
             $table->string('brand');
-            $table->integer('capacity');
             $table->string('model');
+            $table->integer('capacity');
             $table->string('plate');
             $table->decimal('rental_rate', 10, 2);
             $table->enum('status', ['tersedia', 'disewa', 'dalam perbaikan']);
             $table->timestamps();
-        });
+        });            
     }
 
     /**

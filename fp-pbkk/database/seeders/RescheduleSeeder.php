@@ -9,6 +9,6 @@ class RescheduleSeeder extends Seeder
 {
     public function run(): void
     {
-        Reschedule::factory(100)->create();
+        Reschedule::factory(10)->create();
     }
 }

@@ -9,6 +9,6 @@ class RefundSeeder extends Seeder
 {
     public function run(): void
     {
-        Refund::factory(100)->create();
+        Refund::factory(10)->create();
     }
 }

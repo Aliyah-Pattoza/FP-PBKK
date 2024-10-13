@@ -12,10 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('cancellations', function (Blueprint $table) {
-            $table->id();
-            $table->string('reason');
-            $table->foreignId('transaction_id')->constrained('transactions')->onDelete('cascade');
+            $table->string('id_cancelled')->primary(); // Custom cancellation ID
+            $table->string('reason'); // Reason for cancellation
+            $table->string('transaction_id'); // Foreign key to transactions table
+
             $table->timestamps();
+
+            // Set foreign key constraint on transaction_id, referencing id in transactions table
+            $table->foreign('transaction_id')->references('id')->on('transactions')->onDelete('cascade');
         });
     }
 

@@ -11,11 +11,16 @@ class DriverFactory extends Factory
 
     public function definition()
     {
+        static $driverCounter = 1; // To increment the driver ID
+
         return [
-            'nik_driver' => $this->faker->unique()->randomNumber(),
+            'id_driver' => 'DRV' . str_pad($driverCounter++, 4, '0', STR_PAD_LEFT), // Custom user ID CXXXX
+            'nik_driver' => $this->faker->unique()->numerify('###########'), // Unique NIK (driver's ID)
             'name_driver' => $this->faker->name,
-            'email_driver' => $this->faker->email,  // Nama kolom yang benar
-            'phone_driver' => $this->faker->phoneNumber,
+            'email_driver' => $this->faker->unique()->safeEmail,  // Unique email
+            'phone_driver' => '+62 ' . $this->faker->unique()->numerify('8##-####-####'), // Unique phone number
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
     }
 }

@@ -7,8 +7,8 @@ use App\Models\Driver;
 
 class DriverSeeder extends Seeder
 {
-    public function run(): void
+    public function run()
     {
-        Driver::factory(100)->create();
+        Driver::factory()->count(10)->create();
     }
 }

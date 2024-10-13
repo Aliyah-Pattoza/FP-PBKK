@@ -9,6 +9,6 @@ class CancellationSeeder extends Seeder
 {
     public function run(): void
     {
-        Cancellation::factory(100)->create();
+        Cancellation::factory(10)->create();
     }
 }
