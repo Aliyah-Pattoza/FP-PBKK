@@ -12,35 +12,17 @@ class Transaction extends Model
     protected $table = 'transactions';
 
     protected $fillable = [
+        'id',
+        'package_id',
+        'user_id',
+        'vehicle_id',
         'transaction_date',
         'status',
         'total_price',
         'person_number',
-        'user_id',
+        'created_at',
+        'updated_at'
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function cancellations()
-    {
-        return $this->hasMany(Cancellation::class);
-    }
-
-    public function refunds()
-    {
-        return $this->hasMany(Refund::class);
-    }
-
-    public function reschedules()
-    {
-        return $this->hasMany(Reschedule::class);
-    }
-
-    public function packages()
-    {
-        return $this->belongsToMany(Package::class, 'package_transaction');
-    }
+    // Define relationships if needed
 }

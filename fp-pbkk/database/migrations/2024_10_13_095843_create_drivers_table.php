@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('nama_client');
-            $table->string('email_client')->unique();
-            $table->string('phone_client')->nullable();
-            $table->integer('points')->default(0);
+        Schema::create('drivers', function (Blueprint $table) {
+            $table->string('id_driver')->primary();  // Custom ID as the primary key
+            $table->string('nik_driver')->unique();
+            $table->string('name_driver');
+            $table->string('email_driver')->unique();
+            $table->string('phone_driver')->unique();
             $table->timestamps();
         });
     }
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('drivers');
     }
 };

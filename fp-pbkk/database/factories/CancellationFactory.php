@@ -7,11 +7,18 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 
 class CancellationFactory extends Factory
 {
+    protected $model = \App\Models\Cancellation::class;
+
     public function definition()
     {
+        static $cancelCounter = 1;
+
         return [
-            'reason' => $this->faker->sentence,
-            'transaction_id' => Transaction::factory(), // Menggunakan factory Transaction yang benar
+            'id_cancelled' => 'CNL' . str_pad($cancelCounter++, 4, '0', STR_PAD_LEFT),
+            'reason' => 'sakit',
+            'transaction_id' => Transaction::factory(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
     }
 }

@@ -11,8 +11,15 @@ class Vehicle extends Model
 
     protected $table = 'vehicles';
 
-    public function packages()
-    {
-        return $this->hasMany(Package::class);
-    }
+    protected $fillable = [
+        'id',
+        'tipe_kendaraan',
+        'brand',
+        'capacity',
+        'plate',
+        'rental_rate',
+        'status',
+        'created_at',
+        'updated_at',
+    ];
 }
