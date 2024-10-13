@@ -6,7 +6,14 @@ Route::get('/', function () {
     return view('home', ['title' => 'Home Page']);
 });
 
-Route::get('/team', function () {
-    return view('team');
+Route::get('/about', function () {
+    return view('about');
 });
 
+Route::get('/tourlist', function () {
+    return view('tourlist');
+});
+
+Route::get('/bookings', function () {
+    return view('bookings');
+});
