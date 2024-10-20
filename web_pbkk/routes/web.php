@@ -40,11 +40,12 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/dashboard/menu/{menu}', [DashboardMenuController::class, 'destroy'])->name('dashboard.menu.destroy');
 });
 
-// Route untuk halaman reservasi di website utama
-Route::get('/reservation', [ReservationController::class, 'create'])->name('reservation.create');
+Route::middleware(['auth'])->group(function () {
+Route::get('/reservation', [ReservationController::class, 'index'])->name('reservation.index');
 Route::post('/reservation', [ReservationController::class, 'store'])->name('reservation.store');
+Route::get('/reservation/create', [ReservationController::class, 'create'])->name('reservation.create');
+});
 
-// Route untuk manajemen reservasi di dashboard (hanya untuk admin/staff)
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard/reservations', [DashboardReservationController::class, 'index'])->name('dashboard.reservations.index');
     Route::get('/dashboard/reservations/{reservation}/edit', [DashboardReservationController::class, 'edit'])->name('dashboard.reservations.edit');
@@ -54,5 +55,9 @@ Route::middleware(['auth'])->group(function () {
 
 use App\Http\Controllers\OrderController;
 
-Route::get('/dashboard/orders', [OrderController::class, 'showOrders'])->name('dashboard.orders.order');
 
+Route::get('/menu', [MenuController::class, 'index'])->name('menu.index');
+Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+Route::get('/orders/create', [OrderController::class, 'create'])->name('orders.create');
+Route::patch('/orders/{id}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');

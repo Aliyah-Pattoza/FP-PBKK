@@ -18,4 +18,5 @@ class Reservation extends Model
         'notes',
         'status',
     ];
+
 }

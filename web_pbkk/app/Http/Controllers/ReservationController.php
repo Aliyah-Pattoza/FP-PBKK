@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Reservation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ReservationController extends Controller
 {
@@ -25,5 +26,12 @@ class ReservationController extends Controller
         Reservation::create($validatedData);
 
         return redirect('/reservation')->with('success', 'Reservation request submitted successfully.');
+    }
+
+    public function index()
+    {
+        // Mengambil semua pesanan pengguna yang sedang login
+        $reservations = Reservation::where('name', Auth::user()->name)->get();
+        return view('reservation.index', compact('reservations'));
     }
 }

@@ -3,10 +3,9 @@
 @section('title', 'Menu')
 
 @section('container')
-    <div class="container">
-        <h1 class="my-4">Our Menu</h1>
-
-        <!-- Filter Kategori -->
+    <form id="order-form" method="POST" action="{{ route('orders.store') }}">
+        @csrf
+        <!-- Filter berdasarkan kategori -->
         <div class="mb-4">
             <a href="{{ route('menu.index', ['category' => 'all']) }}" 
                class="btn btn-warning {{ $category == 'all' ? 'active' : '' }}">All</a>
@@ -16,184 +15,141 @@
                class="btn btn-warning {{ $category == 'food' ? 'active' : '' }}">Foods</a>
             <a href="{{ route('menu.index', ['category' => 'dessert']) }}" 
                class="btn btn-warning {{ $category == 'dessert' ? 'active' : '' }}">Desserts</a>
+               <button type="button" class="btn btn-danger" id="confirm-order-btn" data-bs-toggle="modal" data-bs-target="#orderModal">Pesan Sekarang</button>
         </div>
 
-        <!-- Menu Items -->
+        <!-- Daftar menu berdasarkan kategori -->
         <div class="row">
-            @forelse ($menus as $menu)
-                <div class="col-md-4 mb-4">
-                    <div class="card h-100">
-                        <img src="{{ $menu->image ? asset('storage/' . $menu->image) : 'https://via.placeholder.com/150' }}" 
-                             class="card-img-top" 
-                             alt="{{ $menu->name }}">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ $menu->name }}</h5>
-                            <p class="card-text">{{ $menu->description }}</p>
-                            <p class="card-text"><strong>Rp {{ number_format($menu->price, 2) }}</strong></p>
+            @if ($menus && count($menus) > 0)
+                @foreach($menus as $menu)
+                    <div class="col-md-3 mb-4">
+                        <div class="card h-100 d-flex flex-column">
+                            <!-- Gambar menu -->
+                            <img src="{{ $menu->image ? asset('storage/' . $menu->image) : 'https://via.placeholder.com/150' }}" 
+                                 class="card-img-top" 
+                                 alt="{{ $menu->name }}">
 
-                            <!-- Add to Cart Buttons -->
-                            <div class="d-flex justify-content-end align-items-center">
-                                @if($menu->availability)
-                                    <button class="btn btn-outline-primary btn-sm" 
-                                            id="plus-{{ $menu->id }}" 
-                                            onclick="showQuantityInput({{ $menu->id }}, {{ $menu->price }}, '{{ $menu->name }}')">
-                                        +
-                                    </button>
-                                    <div class="d-none" id="quantity-wrapper-{{ $menu->id }}">
-                                        <button class="btn btn-outline-secondary btn-sm" 
-                                                type="button" 
-                                                onclick="decreaseQuantity({{ $menu->id }})">-</button>
-                                        <span id="quantity-{{ $menu->id }}">1</span>
-                                        <button class="btn btn-outline-secondary btn-sm" 
-                                                type="button" 
-                                                onclick="increaseQuantity({{ $menu->id }})">+</button>
+                            <div class="card-body d-flex flex-column">
+                                <!-- Nama dan deskripsi menu -->
+                                <h5 class="card-title">{{ $menu->name }}</h5>
+                                <p class="card-text">{{ $menu->description }}</p>
+                                <p class="card-text">Price: Rp {{ number_format($menu->price, 0, ',', '.') }}</p>
+
+                                <!-- Status ketersediaan -->
+                                @if ($menu->availability)
+                                    <!-- Pilihan untuk memilih menu -->
+                                    <div class="form-group mt-auto">
+                                        <input type="checkbox" name="hidangan[]" value="{{ $menu->id }}" data-price="{{ $menu->price }}" class="menu-checkbox">
+                                        <label for="jumlah_hidangan{{ $menu->id }}">Jumlah:</label>
+                                        <input type="number" name="jumlah_hidangan{{ $menu->id }}" class="form-control menu-quantity" min="1" value="1" disabled>
                                     </div>
                                 @else
-                                    <button class="btn btn-outline-danger btn-sm" disabled>+</button>
+                                    <p class="text-danger"></p>
                                 @endif
                             </div>
-                        </div>
-                        <div class="card-footer text-center">
-                            <span class="badge {{ $menu->availability ? 'bg-success' : 'bg-danger' }}">
-                                {{ $menu->availability ? 'Available' : 'Not Available' }}
-                            </span>
+                            <div class="card-footer text-center">
+                                <span class="badge {{ $menu->availability ? 'bg-success' : 'bg-danger' }}">
+                                    {{ $menu->availability ? 'Available' : 'Not Available' }}
+                                </span>
+                            </div>
                         </div>
                     </div>
+                @endforeach
+            @else
+                <div class="col-12">
+                    <p class="text-center">Menu tidak tersedia.</p>
                 </div>
-            @empty
-                <p class="text-center">No items available in this category.</p>
-            @endforelse
+            @endif
         </div>
+    </form>
 
-        <!-- Floating Cart Icon -->
-        <div class="floating-cart">
-            <button class="btn btn-warning rounded-circle p-3" data-bs-toggle="modal" data-bs-target="#cartModal">
-                <i class="bi bi-cart"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- Cart Modal -->
-    <div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
+    <!-- Modal untuk konfirmasi pesanan -->
+    <div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="cartModalLabel">Your Cart</h5>
+                    <h5 class="modal-title" id="orderModalLabel">Konfirmasi Pesanan Anda</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <ul id="cartItems" class="list-group mb-3">
-                        <!-- Item list will be dynamically generated here -->
+                    <ul id="orderSummary" class="list-group mb-3">
+                        <!-- Pesanan akan ditampilkan di sini -->
                     </ul>
                     <div class="d-flex justify-content-between">
-                        <strong>Total Price:</strong>
+                        <strong>Total Harga:</strong>
                         <span id="totalPrice">Rp 0,00</span>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary">Order Now</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" id="confirmOrderBtn">Konfirmasi Pesanan</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <style>
-        .floating-cart {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000;
-        }
-        .btn-sm {
-            width: 30px;
-            height: 30px;
-            padding: 0;
-            line-height: 30px;
-            text-align: center;
-        }
-    </style>
-
-    <!-- Script for Quantity Increment/Decrement and Cart Handling -->
+    <!-- Script untuk menangani keranjang dan konfirmasi -->
     <script>
-        let cart = [];
-        let totalPrice = 0;
-
-        function showQuantityInput(menuId, price, name) {
-            document.getElementById(`plus-${menuId}`).classList.add('d-none');
-            document.getElementById(`quantity-wrapper-${menuId}`).classList.remove('d-none');
+        document.addEventListener('DOMContentLoaded', function () {
+            const confirmOrderBtn = document.getElementById('confirm-order-btn');
+            const orderSummary = document.getElementById('orderSummary');
+            const totalPriceElement = document.getElementById('totalPrice');
+            const confirmOrderBtnModal = document.getElementById('confirmOrderBtn');
+            const form = document.getElementById('order-form');
             
-            // Add to cart
-            addToCart(menuId, price, name);
-        }
-
-        function increaseQuantity(menuId) {
-            const quantityElement = document.getElementById(`quantity-${menuId}`);
-            quantityElement.innerText = parseInt(quantityElement.innerText) + 1;
-
-            // Update cart
-            updateCart(menuId, 1);
-        }
-
-        function decreaseQuantity(menuId) {
-            const quantityElement = document.getElementById(`quantity-${menuId}`);
-            const currentQuantity = parseInt(quantityElement.innerText);
-            if (currentQuantity > 1) {
-                quantityElement.innerText = currentQuantity - 1;
-
-                // Update cart
-                updateCart(menuId, -1);
-            } else {
-                document.getElementById(`plus-${menuId}`).classList.remove('d-none');
-                document.getElementById(`quantity-wrapper-${menuId}`).classList.add('d-none');
-
-                // Remove from cart
-                removeFromCart(menuId);
-            }
-        }
-
-        function addToCart(menuId, price, name) {
-            const itemIndex = cart.findIndex(item => item.menuId === menuId);
-            if (itemIndex === -1) {
-                cart.push({ menuId, price, name, quantity: 1 });
-            }
-            updateCartDisplay();
-        }
-
-        function updateCart(menuId, change) {
-            const itemIndex = cart.findIndex(item => item.menuId === menuId);
-            if (itemIndex !== -1) {
-                cart[itemIndex].quantity += change;
-                if (cart[itemIndex].quantity <= 0) {
-                    cart.splice(itemIndex, 1); 
-                }
-            }
-            updateCartDisplay();
-        }
-
-        function removeFromCart(menuId) {
-            cart = cart.filter(item => item.menuId !== menuId);
-            updateCartDisplay();
-        }
-
-        function updateCartDisplay() {
-            const cartItemsElement = document.getElementById('cartItems');
-            cartItemsElement.innerHTML = '';
-            totalPrice = 0;
-
-            cart.forEach(item => {
-                const itemTotalPrice = item.price * item.quantity;
-                totalPrice += itemTotalPrice;
+            confirmOrderBtn.addEventListener('click', function () {
+                const selectedMenus = document.querySelectorAll('.menu-checkbox:checked');
+                let totalPrice = 0;
+                orderSummary.innerHTML = ''; // Kosongkan pesanan sebelumnya
                 
-                const cartItem = `
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        ${item.name} (x${item.quantity})
-                        <span>Rp ${itemTotalPrice.toFixed(2)}</span>
-                    </li>
-                `;
-                cartItemsElement.innerHTML += cartItem;
+                selectedMenus.forEach(menu => {
+                    const menuId = menu.value;
+                    const menuName = menu.closest('.card-body').querySelector('.card-title').innerText;
+                    const quantity = menu.closest('.form-group').querySelector('.menu-quantity').value;
+                    const price = menu.getAttribute('data-price');
+                    const subtotal = price * quantity;
+
+                    // Buat item pesanan
+                    const orderItem = `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            ${menuName} (x${quantity})
+                            <span>Rp ${subtotal.toLocaleString('id-ID')}</span>
+                        </li>
+                    `;
+                    orderSummary.innerHTML += orderItem;
+                    totalPrice += subtotal;
+                });
+
+                totalPriceElement.innerText = `Rp ${totalPrice.toLocaleString('id-ID')}`;
             });
 
-            document.getElementById('totalPrice').innerText = `Rp ${totalPrice.toFixed(2)}`;
-        }
+            // Enable/disable quantity input based on checkbox
+            document.querySelectorAll('.menu-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function () {
+                    const quantityInput = this.closest('.form-group').querySelector('.menu-quantity');
+                    if (this.checked) {
+                        quantityInput.removeAttribute('disabled');
+                    } else {
+                        quantityInput.setAttribute('disabled', 'disabled');
+                    }
+                });
+            });
+
+            // Submit form when order is confirmed
+            confirmOrderBtnModal.addEventListener('click', function () {
+                form.submit();
+            });
+        });
     </script>
+
+    <style>
+        /* Untuk memastikan semua card memiliki ukuran yang sama */
+        .card {
+            height: 100%; /* Mengatur tinggi penuh */
+        }
+        .card-body {
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
 @endsection

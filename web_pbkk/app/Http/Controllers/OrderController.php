@@ -2,113 +2,85 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Menu;
 use App\Models\Order;
-use App\Models\Order_Item;
+use App\Models\Menu;
+use App\Models\OrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
-    // Menampilkan halaman keranjang
-    public function cart()
+    // Menampilkan halaman pembuatan order
+    public function create(Request $request)
     {
-        $cart = session()->get('cart', []);
-        return view('order.cart', compact('cart'));
-    }
-
-    // Tambahkan menu ke dalam keranjang
-    public function addToCart($menu_id)
-    {
-        $menu = Menu::findOrFail($menu_id);
-        $cart = session()->get('cart', []);
-
-        if (isset($cart[$menu_id])) {
-            $cart[$menu_id]['quantity']++;
+        $category = $request->query('category', 'all');
+        // Menampilkan menu berdasarkan kategori yang dipilih
+        if ($category === 'all') {
+            $menus = Menu::all();
         } else {
-            $cart[$menu_id] = [
-                'name' => $menu->name,
-                'quantity' => 1,
-                'price' => $menu->price,
-                'image' => $menu->image,
-            ];
+            $menus = Menu::where('category', $category)->get();
         }
-
-        session()->put('cart', $cart);
-        return redirect()->back()->with('success', 'Menu added to cart');
+        
+        return view('orders.create', [
+            'menus' => $menus,
+            'category' => $category,
+        ]);
     }
 
-    // Mengurangi jumlah menu di keranjang
-    public function updateCart(Request $request)
+    // Menyimpan pesanan ke database
+    public function store(Request $request)
     {
-        $cart = session()->get('cart', []);
-        $menu_id = $request->menu_id;
-
-        if (isset($cart[$menu_id])) {
-            $cart[$menu_id]['quantity'] = $request->quantity;
-            if ($cart[$menu_id]['quantity'] <= 0) {
-                unset($cart[$menu_id]);
-            }
-            session()->put('cart', $cart);
+        // Menghitung total harga dari semua item yang dipesan
+        $totalPrice = 0;
+        foreach ($request->input('hidangan', []) as $menuId) {
+            $menu = Menu::findOrFail($menuId);  // Pastikan menu ditemukan
+            $quantity = $request->input('jumlah_hidangan' . $menuId);
+            $totalPrice += $menu->price * $quantity;
         }
 
-        return redirect()->back();
-    }
-
-    // Hapus item dari keranjang
-    public function removeFromCart($menu_id)
-    {
-        $cart = session()->get('cart', []);
-
-        if (isset($cart[$menu_id])) {
-            unset($cart[$menu_id]);
-            session()->put('cart', $cart);
-        }
-
-        return redirect()->back();
-    }
-
-    // Simpan order ke database (Checkout)
-    public function checkout()
-    {
-        $cart = session()->get('cart', []);
-
-        if (empty($cart)) {
-            return redirect()->back()->with('error', 'Cart is empty');
-        }
-
+        // Membuat order baru
         $order = Order::create([
-            'user_id' => Auth::user()->id, // Memastikan menggunakan Auth untuk mendapatkan user ID
-            'total_price' => array_sum(array_map(function ($item) {
-                return $item['quantity'] * $item['price'];
-            }, $cart)),
-            'status' => 'pending',
+            'user_id' => Auth::id(),
+            'total_price' => $totalPrice,
+            'status' => 'pending'
         ]);
 
-        foreach ($cart as $menu_id => $item) {
-            Order_Item::create([
+        // Membuat detail order untuk setiap item
+        foreach ($request->input('hidangan', []) as $menuId) {
+            $menu = Menu::findOrFail($menuId);
+            $quantity = $request->input('jumlah_hidangan' . $menuId);
+
+            OrderItem::create([
                 'order_id' => $order->id,
-                'menu_id' => $menu_id,
-                'quantity' => $item['quantity'],
-                'price' => $item['price'],
+                'menu_id' => $menuId,
+                'quantity' => $quantity,
+                'price' => $menu->price * $quantity
             ]);
         }
 
-        // Kosongkan keranjang setelah checkout
-        session()->forget('cart');
-        return redirect('/dashboard/orders')->with('success', 'Order placed successfully');
+        // Mengarahkan pengguna ke halaman index order
+        return redirect()->route('orders.index');
     }
 
-    // Menampilkan halaman sukses setelah checkout
-    public function success()
+    public function cancel($id)
     {
-        return view('order.success');
+        $order = Order::find($id);
+
+        if ($order->status == 'pending' || $order->status == 'confirmed') {
+            $order->status = 'canceled';
+            $order->save();
+
+            return redirect()->route('orders.index')->with('success', 'Pesanan berhasil dibatalkan.');
+        }
+
+        return redirect()->route('orders.index')->with('error', 'Pesanan tidak bisa dibatalkan.');
     }
 
-    // Menampilkan semua order di halaman dashboard
-    public function showOrders()
+    // Menampilkan daftar pesanan
+    public function index()
     {
-        $orders = Order::with('items.menu')->where('user_id', Auth::user()->id)->get();
-        return view('dashboard.orders', compact('orders'));
+        // Mengambil semua pesanan pengguna yang sedang login
+        $orders = Order::where('user_id', Auth::id())->get();
+        return view('orders.index', compact('orders'));
     }
 }
